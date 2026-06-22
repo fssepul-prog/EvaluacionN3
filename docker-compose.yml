@@ -1,0 +1,326 @@
+services:
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: foodmarket-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: foodmarket-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LOG_RETENTION_HOURS: 24
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  mysql:
+    image: mysql:8.0
+    container_name: foodmarket-mysql
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+
+  eureka:
+    build: ./ms-eureka
+    container_name: foodmarket-eureka
+    ports:
+      - "9761:9761"
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m"
+    deploy:
+      resources:
+        limits:
+          memory: 384m
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9761/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
+  api-gateway:
+    build: ./ms-api-gateway
+    container_name: foodmarket-api-gateway
+    ports:
+      - "9090:9090"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:9761/eureka
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m"
+    deploy:
+      resources:
+        limits:
+          memory: 384m
+    depends_on:
+      eureka:
+        condition: service_healthy
+
+  ms-auth:
+    build: ./ms-auth
+    container_name: foodmarket-auth
+    ports:
+      - "9081:9081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_auth?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ""
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:9761/eureka
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m"
+    volumes:
+      - ./logs:/logs
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
+
+  ms-user:
+    build: ./ms-user
+    container_name: foodmarket-user
+    ports:
+      - "9082:9082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_user?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ""
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:9761/eureka
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m"
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
+
+  ms-restaurant:
+    build: ./ms-restaurant
+    container_name: foodmarket-restaurant
+    ports:
+      - "9083:9083"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_restaurant?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ""
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:9761/eureka
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m"
+    volumes:
+      - ./logs:/logs
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
+
+  ms-order:
+    build: ./ms-order
+    container_name: foodmarket-order
+    ports:
+      - "9084:9084"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_order?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ""
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:9761/eureka
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m"
+    volumes:
+      - ./logs:/logs
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+  ms-payment:
+    build: ./payment-service
+    container_name: foodmarket-payment
+    ports:
+      - "9085:9085"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_payment?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ""
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:9761/eureka
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m"
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
+
+  ms-delivery:
+    build: ./ms-delivery/delivery-service
+    container_name: foodmarket-delivery
+    ports:
+      - "9086:9086"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_delivery?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ""
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:9761/eureka
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m"
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
+
+  ms-notification:
+    build: ./ms-notification/notification-service
+    container_name: foodmarket-notification
+    ports:
+      - "9087:9087"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_notification?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ""
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:9761/eureka
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m"
+    volumes:
+      - ./logs:/logs
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+  ms-review:
+    build: ./ms-review/review-service
+    container_name: foodmarket-review
+    ports:
+      - "9088:9088"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_review?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ""
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:9761/eureka
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m"
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
+
+  ms-search:
+    build: ./search-service
+    container_name: foodmarket-search
+    ports:
+      - "9089:9089"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_search?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ""
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:9761/eureka
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m"
+    deploy:
+      resources:
+        limits:
+          memory: 384m
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
+
+  ms-report:
+    build: ./report-service
+    container_name: foodmarket-report
+    ports:
+      - "9095:9095"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_report?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ""
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:9761/eureka
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m"
+    volumes:
+      - ./logs:/logs
+    deploy:
+      resources:
+        limits:
+          memory: 384m
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+volumes:
+  mysql_data:
