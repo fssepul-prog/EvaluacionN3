@@ -1,0 +1,80 @@
+server:
+  # Puerto anterior: 8080 | Puerto actual: 9090 (cambio debido a restricciones de duoc)
+  # alternativa para usar puerto 8080, cerrar operaciones de XAMPP
+  port: 9090
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        # Rutas publicas (sin JWT)    login y registro
+        - id: auth-service
+          uri: lb://ms-auth
+          predicates:
+            - Path=/auth/**
+
+        # Rutas protegidas (JWT validado por JwtAuthFilter) privadas y acceso mediante token
+        - id: user-service
+          uri: lb://ms-user
+          predicates:
+            - Path=/users/**
+
+        - id: restaurant-service
+          uri: lb://ms-restaurant
+          predicates:
+            - Path=/restaurants/**
+
+        - id: order-service
+          uri: lb://ms-order
+          predicates:
+            - Path=/orders/**
+
+        - id: payment-service
+          uri: lb://ms-payment
+          predicates:
+            - Path=/payments/**
+
+        - id: delivery-service
+          uri: lb://ms-delivery
+          predicates:
+            - Path=/deliveries/**
+
+        - id: notification-service
+          uri: lb://ms-notification
+          predicates:
+            - Path=/notifications/**
+
+        - id: review-service
+          uri: lb://ms-review
+          predicates:
+            - Path=/reviews/**
+
+        - id: search-service
+          uri: lb://ms-search
+          predicates:
+            - Path=/search/**
+
+        - id: report-service
+          uri: lb://ms-report
+          predicates:
+            - Path=/reports/**
+
+# Clave JWT - IDENTICA a la del auth-service
+jwt:
+  secret: foodmarket-super-secret-key-2024-spring-boot-dsy1103
+
+eureka:
+  client:
+    service-url:
+      # Puerto anterior: 8761 | Puerto actual: 9761
+      defaultZone: http://localhost:9761/eureka
+  instance:
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
