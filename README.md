@@ -79,29 +79,24 @@ Cada microservicio expone su documentación en `/swagger-ui.html` (accesible por
 | review-service | http://localhost:9088/swagger-ui.html |
 | report-service | http://localhost:9095/swagger-ui.html |
 
-> **Nota**: La documentación JSON (OpenAPI 3.0) está disponible en `/api-docs` de cada servicio.
+
 
 ---
 
 ## Pruebas unitarias
 
-Las pruebas se ejecutan con Maven desde la carpeta de cada servicio:
+En IntelliJ IDEA, navegamos en el panel de proyecto hasta el archivo de test de cada microservicio y haz click derecho → Run:
 
-```bash
-# Pruebas de autenticación
-cd ms-auth && mvn test
+ms-auth
+ms-auth → src → test → java → com.foodmarket.auth.service → AuthServiceTest.java
 
-# Pruebas de restaurantes
-cd ms-restaurant && mvn test
+ms-restaurant
+ms-restaurant → src → test → java → com.foodmarket.restaurant.service → RestaurantServiceTest.java
 
-# Pruebas de pedidos
-cd ms-order && mvn test
+ms-order
+ms-order → src → test → java → com.foodmarket.order.service → OrderServiceTest.java
 
-# Pruebas de notificaciones
-cd ms-notification/notification-service && mvn test
-
-# Pruebas de reportes
-cd report-service && mvn test
+Los resultados aparecen en el panel inferior mostrando cada test con ✅ si pasó o ❌ si falló.
 ```
 
 Cobertura mínima: **80%** sobre la capa de servicio (lógica de negocio).
