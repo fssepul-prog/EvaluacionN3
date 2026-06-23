@@ -1,0 +1,6 @@
+2026-06-23 12:35:59.449 [main] INFO  [ms-restaurant] c.f.r.service.RestaurantService - Item agregado: Pizza Margherita (stock: 10)
+2026-06-23 12:35:59.466 [main] INFO  [ms-restaurant] c.f.r.service.RestaurantService - Restaurante creado: Pizza Express en zona PROVIDENCIA
+2026-06-23 12:35:59.469 [main] INFO  [ms-restaurant] c.f.r.service.RestaurantService - Stock actualizado: item 1 -> 0 unidades
+2026-06-23 12:35:59.471 [main] INFO  [ms-restaurant] c.f.r.service.RestaurantService - Item agregado: Pizza Agotada (stock: 0)
+2026-06-23 12:35:59.474 [main] INFO  [ms-restaurant] c.f.r.service.RestaurantService - Stock actualizado: item 1 -> 5 unidades
+2026-06-23 12:35:59.481 [main] INFO  [ms-restaurant] c.f.r.service.RestaurantService - Estado restaurante 1 -> CLOSED
