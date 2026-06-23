@@ -1,0 +1,4 @@
+2026-06-23 12:35:41.331 [main] INFO  [ms-order] c.f.order.service.OrderService - Pedido 100 creado para cliente 1
+2026-06-23 12:35:41.344 [main] INFO  [ms-order] c.f.order.service.OrderService - Pedido 100 -> estado CONFIRMED
+2026-06-23 12:35:41.348 [main] INFO  [ms-order] c.f.order.service.OrderService - Pedido 100 -> estado DELIVERED
+2026-06-23 12:35:41.356 [main] INFO  [ms-order] c.f.order.service.OrderService - Pedido 100 creado para cliente 1

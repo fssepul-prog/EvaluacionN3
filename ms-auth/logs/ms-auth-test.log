@@ -1,0 +1,4 @@
+2026-06-23 12:35:07.292 [main] INFO  [ms-auth] c.f.auth.service.AuthService - Usuario registrado: test@foodmarket.cl con rol CUSTOMER
+2026-06-23 12:35:07.325 [main] INFO  [ms-auth] c.f.auth.service.AuthService - Login exitoso: test@foodmarket.cl
+2026-06-23 12:35:07.330 [main] INFO  [ms-auth] c.f.auth.service.AuthService - Login exitoso: test@foodmarket.cl
+2026-06-23 12:35:07.333 [main] INFO  [ms-auth] c.f.auth.service.AuthService - Usuario registrado: test@foodmarket.cl con rol CUSTOMER
